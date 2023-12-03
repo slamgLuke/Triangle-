@@ -14,15 +14,14 @@
 #define VERT_SHADER SHADER_PATH "vert.glsl"
 #define FRAG_SHADER SHADER_PATH "frag.glsl"
 
-#define WIDTH 1000
-#define HEIGHT 700
+static const int WIDTH = 800;
+static const int HEIGHT = 600;
+
+static int window_width = WIDTH;
+static int window_height = HEIGHT;
 
 
 void processInput(GLFWwindow* window);
-void window_size_callback(GLFWwindow* window, int width, int height);
-
-static int x = 0;
-static int y = 0;
 
 
 int main()
@@ -36,10 +35,10 @@ int main()
     printf("OpenGL: version supported by this platform (%s): \n", glGetString(GL_VERSION));
 
     static const GLfloat vertexData[] = {
-        // x, y, z, r, g, b
-        0.0f, 0.5f, 0.0f,    1.0f, 0.0f, 0.f,
-        0.5f, -0.5, 0.0f,    0.0f, 1.0f, 0.f,
-        -0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.f
+        // x, y, z,                         r, g, b
+        WIDTH*0.5f, HEIGHT*0.75f, 0.0f,     1.0f, 0.0f, 0.f,
+        WIDTH*0.25f, HEIGHT*0.25f, 0.0f,    0.0f, 1.0f, 0.f,
+        WIDTH*0.75f, HEIGHT*0.25f, 0.0f,    0.0f, 0.0f, 1.f
     };
 
 
@@ -67,9 +66,20 @@ int main()
 
 
     GLuint programID = LoadShaders(VERT_SHADER, FRAG_SHADER);
-    
 
-    glfwSetWindowSizeCallback(window, window_size_callback);
+
+    mat4 projection;
+    glm_ortho(0, WIDTH, 0, HEIGHT, -1.0f, 1.0f, projection);
+
+    mat4 view = GLM_MAT4_IDENTITY_INIT;
+
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
+  
+    mat4 mvp;
+    glm_mat4_mul(projection, view, mvp);
+    glm_mat4_mul(mvp, model, mvp);
+
+    GLuint mvpID = glGetUniformLocation(programID, "mvp");
 
 
     // Main loop
@@ -81,16 +91,11 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(programID);
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, (const GLfloat*)mvp);
 
 
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        float aspectRatio = (float)width / (float)height;
-        mat4 model = GLM_MAT4_IDENTITY_INIT;
-        glm_scale_uni(model, aspectRatio);
-
-        GLint model_loc = glGetUniformLocation(programID, "model");
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, (float*)model);
+        glfwGetWindowSize(window, &window_width, &window_height);
+        glViewport(0, 0, window_width, window_height);
 
         // Draw triangle
         glBindVertexArray(vao);
@@ -98,7 +103,6 @@ int main()
 
         glBindVertexArray(0);
 
-        glViewport(x, y, width, height);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -114,13 +118,4 @@ int main()
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, 1);
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) x -= 10;
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) x += 10;
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) y += 10;
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) y -= 10;
-}
-
-void window_size_callback(GLFWwindow* window, int width, int height) {
-    (void)window;
-    glViewport(x, y, width, height);
 }
