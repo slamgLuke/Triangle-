@@ -1,4 +1,4 @@
-CFLAGS = -std=c99 -Wall -Wextra -Werror -pedantic
+CFLAGS = -std=c99 -Wall -Wextra
 LINKER_FLAGS = -lGL -lglfw -lGLEW -lcglm
 
 SRC_DIR = src
